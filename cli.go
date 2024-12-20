@@ -198,7 +198,7 @@ func (c *Cli) RunInteractive() int {
 		stop := c.PrintProgressingMark()
 		t0 := time.Now()
 		result, err := stmt.Execute(ctx, c.Session)
-		elapsed := time.Since(t0).Seconds()
+		elapsed := time.Since(t0)
 		stop()
 		if err != nil {
 			if spanner.ErrCode(err) == codes.Aborted {
@@ -213,10 +213,7 @@ func (c *Cli) RunInteractive() int {
 			continue
 		}
 
-		// only SELECT statement has the elapsed time measured by the server
-		if result.Stats.ElapsedTime == "" {
-			result.Stats.ElapsedTime = fmt.Sprintf("%0.2f sec", elapsed)
-		}
+		result.Elapsed = elapsed
 
 		if input.delim == delimiterHorizontal {
 			c.PrintResult(result, DisplayModeTable, true)
@@ -442,6 +439,12 @@ func resultLine(result *Result, verbose bool) string {
 		timestamp = result.Timestamp.Format(time.RFC3339Nano)
 	}
 
+	timing := fmt.Sprintf("%0.3f sec", result.Elapsed.Seconds())
+	// only SELECT statement has the elapsed time measured by the server
+	if result.Stats.ElapsedTime != "" {
+		timing += fmt.Sprintf(", %s server", result.Stats.ElapsedTime)
+	}
+
 	if result.IsMutation {
 		var affectedRowsPrefix string
 		if result.AffectedRowsType == rowCountTypeLowerBound {
@@ -460,7 +463,7 @@ func resultLine(result *Result, verbose bool) string {
 			}
 		}
 		return fmt.Sprintf("Query OK, %s%d rows affected (%s)\n%s",
-			affectedRowsPrefix, result.AffectedRows, result.Stats.ElapsedTime, detail)
+			affectedRowsPrefix, result.AffectedRows, timing, detail)
 	}
 
 	var set string
@@ -491,9 +494,9 @@ func resultLine(result *Result, verbose bool) string {
 		if result.Stats.OptimizerStatisticsPackage != "" {
 			detail += fmt.Sprintf("optimizer statistics: %s\n", result.Stats.OptimizerStatisticsPackage)
 		}
-		return fmt.Sprintf("%s (%s)\n%s", set, result.Stats.ElapsedTime, detail)
+		return fmt.Sprintf("%s (%s)\n%s", set, timing, detail)
 	}
-	return fmt.Sprintf("%s (%s)\n", set, result.Stats.ElapsedTime)
+	return fmt.Sprintf("%s (%s)\n", set, timing)
 }
 
 func buildCommands(input string) ([]*command, error) {

@@ -61,6 +61,7 @@ type Result struct {
 	Timestamp        time.Time
 	ForceVerbose     bool
 	CommitStats      *pb.CommitResponse_CommitStats
+	Elapsed          time.Duration
 
 	// ColumnTypes will be printed in `--verbose` mode if it is not empty
 	ColumnTypes []*pb.StructType_Field

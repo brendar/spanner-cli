@@ -284,75 +284,63 @@ func TestResultLine(t *testing.T) {
 			result: &Result{
 				AffectedRows: 3,
 				IsMutation:   true,
-				Stats: QueryStats{
-					ElapsedTime: "10 msec",
-				},
+				Elapsed:      time.Millisecond * 10,
 			},
 			verbose: false,
-			want:    "Query OK, 3 rows affected (10 msec)\n",
+			want:    "Query OK, 3 rows affected (0.010 sec)\n",
 		},
 		{
 			desc: "mutation in verbose mode (timestamp exist)",
 			result: &Result{
 				AffectedRows: 3,
 				IsMutation:   true,
-				Stats: QueryStats{
-					ElapsedTime: "10 msec",
-				},
-				Timestamp: ts,
+				Elapsed:      time.Millisecond * 10,
+				Timestamp:    ts,
 			},
 			verbose: true,
-			want:    fmt.Sprintf("Query OK, 3 rows affected (10 msec)\ntimestamp:      %s\n", timestamp),
+			want:    fmt.Sprintf("Query OK, 3 rows affected (0.010 sec)\ntimestamp:      %s\n", timestamp),
 		},
 		{
 			desc: "mutation in verbose mode (both of timestamp and mutation count exist)",
 			result: &Result{
 				AffectedRows: 3,
 				IsMutation:   true,
-				Stats: QueryStats{
-					ElapsedTime: "10 msec",
-				},
-				CommitStats: &sppb.CommitResponse_CommitStats{MutationCount: 6},
-				Timestamp:   ts,
+				Elapsed:      time.Millisecond * 10,
+				CommitStats:  &sppb.CommitResponse_CommitStats{MutationCount: 6},
+				Timestamp:    ts,
 			},
 			verbose: true,
-			want:    fmt.Sprintf("Query OK, 3 rows affected (10 msec)\ntimestamp:      %s\nmutation_count: 6\n", timestamp),
+			want:    fmt.Sprintf("Query OK, 3 rows affected (0.010 sec)\ntimestamp:      %s\nmutation_count: 6\n", timestamp),
 		},
 		{
 			desc: "mutation in verbose mode (timestamp not exist)",
 			result: &Result{
 				AffectedRows: 0,
 				IsMutation:   true,
-				Stats: QueryStats{
-					ElapsedTime: "10 msec",
-				},
+				Elapsed:      time.Millisecond * 10,
 			},
 			verbose: true,
-			want:    "Query OK, 0 rows affected (10 msec)\n",
+			want:    "Query OK, 0 rows affected (0.010 sec)\n",
 		},
 		{
 			desc: "query in normal mode (rows exist)",
 			result: &Result{
 				AffectedRows: 3,
 				IsMutation:   false,
-				Stats: QueryStats{
-					ElapsedTime: "10 msec",
-				},
+				Elapsed:      time.Millisecond * 10,
 			},
 			verbose: false,
-			want:    "3 rows in set (10 msec)\n",
+			want:    "3 rows in set (0.010 sec)\n",
 		},
 		{
 			desc: "query in normal mode (no rows exist)",
 			result: &Result{
 				AffectedRows: 0,
 				IsMutation:   false,
-				Stats: QueryStats{
-					ElapsedTime: "10 msec",
-				},
+				Elapsed:      time.Millisecond * 10,
 			},
 			verbose: false,
-			want:    "Empty set (10 msec)\n",
+			want:    "Empty set (0.010 sec)\n",
 		},
 		{
 			desc: "query in verbose mode (all stats fields exist)",
@@ -369,9 +357,10 @@ func TestResultLine(t *testing.T) {
 					OptimizerStatisticsPackage: "auto_20210829_05_22_28UTC",
 				},
 				Timestamp: ts,
+				Elapsed:   time.Millisecond * 20,
 			},
 			verbose: true,
-			want: fmt.Sprintf(`3 rows in set (10 msec)
+			want: fmt.Sprintf(`3 rows in set (0.020 sec, 10 msec server)
 timestamp:            %s
 cpu time:             5 msec
 rows scanned:         10 rows
@@ -390,9 +379,10 @@ optimizer statistics: auto_20210829_05_22_28UTC
 					RowsReturned: "3",
 				},
 				Timestamp: ts,
+				Elapsed:   time.Millisecond * 20,
 			},
 			verbose: true,
-			want:    fmt.Sprintf("3 rows in set (10 msec)\ntimestamp:            %s\n", timestamp),
+			want:    fmt.Sprintf("3 rows in set (0.020 sec, 10 msec server)\ntimestamp:            %s\n", timestamp),
 		},
 	} {
 		t.Run(tt.desc, func(t *testing.T) {
